@@ -1,19 +1,34 @@
 var findInFiles = require('find-in-files');
+var recursive = require("recursive-readdir");
+const myRegex = /(\\)(?!.*\1)(.*?).ts/i;
+const folderPath = 'D:/OPT/sonar/src/app';
+const extensionType = ".ts";
+var output = [];
 
-const testFolder = './fileSearch/';
-const fs = require('fs');
-
-fs.readdir(testFolder, (err, files) => {
-  files.forEach(file => {
-    console.log(file);
+recursive(folderPath, function (err, files) {
+  let filesList = [];
+  files.forEach(item=> myRegex.exec(item) ? filesList.push(myRegex.exec(item)[2]+extensionType) : false)
+  filesList.forEach((item,index)=>{
+    globalSearch(item)
+      .then(res => {
+        output.push(res);
+        filesList.length -1 == index ? console.log("output",output) : false;
+      });
   });
+  
 });
 
-// findInFiles.find("file3.txt", '.', '.txt$')
-//     .then(function (results) {
-//         for (var result in results) {
-//             var res = results[result];
-//             console.log('found "' + res.matches[0] + '" ' + res.count + ' times in "' + result + '"');
-//         }
-//     });
-
+globalSearch = fileName => {
+  return findInFiles.find(fileName, folderPath, extensionType+'$')
+  .then(results => {
+    let count = 0;
+    let resp = { fileName : fileName, count: 0, filesList: [] };
+      for (var result in results) {
+        count++;
+        var res = results[result];
+        resp.filesList.push(result)
+      }
+      resp.count = count;
+      return resp;
+  });
+}
